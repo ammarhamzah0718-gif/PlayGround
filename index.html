@@ -1,0 +1,118 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover, user-scalable=no" />
+  <meta name="theme-color" content="#171528" />
+  <title>LINEBORN — a drawing sandbox</title>
+  <link rel="icon" type="image/svg+xml" href="./favicon.svg" />
+  <link rel="stylesheet" href="./styles.css" />
+  <script type="importmap">
+    { "imports": { "three": "./lib/three.module.js", "three/addons/": "./lib/" } }
+  </script>
+</head>
+<body>
+  <canvas id="scene" aria-label="Lineborn 3D drawing world"></canvas>
+  <div id="grain"></div>
+  <div id="vignette"></div>
+
+  <div id="hud">
+    <header class="topbar">
+      <div class="brand">
+        <svg class="logo-mark" viewBox="0 0 48 48" fill="none" aria-hidden="true">
+          <path d="M9 36.5c8.5-1 16.5-8.5 21-19.5 2.5-6.2 8.4-5 8 1-.3 4.7-6 7.4-9.6 4-4.4-4.2 2-13.3 9.6-12.5" stroke="currentColor" stroke-width="2.6" stroke-linecap="round"/>
+          <circle cx="11.5" cy="36.5" r="3.2" fill="currentColor"/>
+        </svg>
+        <div class="brand-text">
+          <h1>LINEBORN</h1>
+          <p>draw <span>·</span> animate <span>·</span> destroy</p>
+        </div>
+      </div>
+      <div class="top-actions">
+        <button class="chip ghost" id="btn-help" title="How to play"><span class="key">?</span> How to play</button>
+        <button class="chip ghost" id="btn-settings" title="Settings"><svg viewBox="0 0 24 24" width="16" height="16" fill="none"><path d="M12 15.2a3.2 3.2 0 100-6.4 3.2 3.2 0 000 6.4Z" stroke="currentColor" stroke-width="1.7"/><path d="M19 12a7 7 0 00-.1-1.1l2-1.5-2-3.4-2.4 1a7 7 0 00-1.9-1.1L14.2 3h-4l-.4 2.8A7 7 0 007.9 7L5.5 6l-2 3.4 2 1.5a7 7 0 000 2.2l-2 1.5 2 3.4 2.4-1a7 7 0 001.9 1.1l.4 2.8h4l.4-2.8a7 7 0 001.9-1.1l2.4 1 2-3.4-2-1.5c.1-.4.1-.8.1-1.2Z" stroke="currentColor" stroke-width="1.4" stroke-linejoin="round"/></svg> Settings</button>
+        <button class="chip vr" id="btn-vr"><svg viewBox="0 0 28 18" width="22" height="15" fill="none"><rect x="1" y="2" width="26" height="14" rx="5" stroke="currentColor" stroke-width="1.8"/><path d="M8 7.5c1.2-1.6 3.2-1.6 4.4 0l.8 1 .8-1c1.2-1.6 3.2-1.6 4.4 0l1 1.4-1.6 1.9c-1.2 1.4-3.4 1.2-4.3-.4L12.3 9l-1.2 1.4c-.9 1.6-3.1 1.8-4.3.4L5.2 9l1-1.4" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/></svg> Enter VR</button>
+      </div>
+    </header>
+
+    <aside class="panel palette" id="palette">
+      <div class="panel-title"><span>INK PHYSICS</span><i id="brush-readout">BLUE GLASS</i></div>
+      <div class="ink-list">
+        <button class="ink active" data-ink="glass" data-key="1">
+          <span class="swatch glass"></span>
+          <span class="ink-name">Glass<small>shatters on impact</small></span>
+          <span class="key">1</span>
+        </button>
+        <button class="ink" data-ink="leaf" data-key="2">
+          <span class="swatch leaf"></span>
+          <span class="ink-name">Leaf<small>tears &amp; flutters</small></span>
+          <span class="key">2</span>
+        </button>
+        <button class="ink" data-ink="void" data-key="3">
+          <span class="swatch void"></span>
+          <span class="ink-name">Floatstone<small>black · cannot convert</small></span>
+          <span class="key">3</span>
+        </button>
+        <button class="ink" data-ink="gravity" data-key="4">
+          <span class="swatch gravity"></span>
+          <span class="ink-name">Gravstone<small>purple · has weight</small></span>
+          <span class="key">4</span>
+        </button>
+      </div>
+      <div class="brush-row">
+        <div class="brush-depth"><span>DEPTH</span><b id="depth-label">3.2m</b></div>
+        <button id="btn-erase" class="tiny" title="Erase tool (X)">Erase</button>
+      </div>
+      <div class="brush-tip">Drag to draw · wheel sets depth</div>
+    </aside>
+
+    <aside class="quests panel" id="quests">
+      <div class="panel-title"><span>SKETCH TRIALS</span><i id="quest-count">0/6</i></div>
+      <ul id="quest-list"></ul>
+      <div class="quest-score"><span>INK SCORE</span><b id="score">0</b></div>
+    </aside>
+
+    <div class="selection-card" id="selection-card" hidden>
+      <div class="sel-color" id="sel-color"></div>
+      <div class="sel-text"><b id="sel-name">Selected</b><span id="sel-sub">double-tap to convert</span></div>
+      <div class="sel-hint">2×</div>
+    </div>
+
+    <div class="weapon-hud" id="weapon-hud" hidden>
+      <div class="wpn-name" id="wpn-name">GLASS PISTOL</div>
+      <div class="wpn-ammo"><b id="wpn-ammo">12</b><span id="wpn-mag">/ 12</span></div>
+      <div class="wpn-mode" id="wpn-mode">LEFT CLICK TO FIRE · R TO RELOAD</div>
+    </div>
+
+    <div class="crosshair" id="crosshair"><span class="ring"></span><span class="dot"></span><span class="depth-tick" id="depth-tick">3.2</span></div>
+    <div class="brush-cursor" id="brush-cursor"></div>
+
+    <div class="bottom-bar">
+      <div class="hint" id="hint"><b>Drag</b> to draw <span>/</span> <b>Click</b> to select <span>/</span> <b>Double-click</b> an ink object to convert <span>/</span> <b>Right-drag</b> to orbit</div>
+      <div class="bottom-btns">
+        <button class="chip dark" id="btn-arena">Spawn hostile beast</button>
+        <button class="chip dark" id="btn-clear">Clear ink</button>
+      </div>
+    </div>
+
+    <div class="mobile-note" id="mobile-note">Touch: drag to draw · two fingers orbit · buttons still work</div>
+  </div>
+
+  <div id="modal-root"></div>
+
+  <div id="toasts" class="toasts"></div>
+
+  <div id="loader">
+    <div class="loader-inner">
+      <svg class="loader-line" viewBox="0 0 320 92" fill="none">
+        <path d="M8 62c24-30 44-42 57-30 10 9-8 40 4 44 14 4 30-52 46-52 14 0 4 46 20 47 15 1 26-41 42-40 15 1 2 39 18 40 13 1 23-20 40-26 22-8 40-4 55-26" stroke="#f4ead6" stroke-width="3" stroke-linecap="round"/>
+      </svg>
+      <h2>LINEBORN</h2>
+      <p>sharpening pencils…</p>
+      <div class="loader-bar"><i></i></div>
+    </div>
+  </div>
+
+  <script type="module" src="./js/main.js"></script>
+</body>
+</html>
